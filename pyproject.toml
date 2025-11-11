@@ -1,0 +1,25 @@
+[project]
+name = "datachatagent"
+version = "0.1.0"
+description = "Data Chat Agent MVP"
+authors = [
+    {name = "Abhilekh Bhardwaj",email = "abhilekhbhardwaj@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "pytest (>=9.0.0,<10.0.0)",
+    "slack-bolt (>=1.26.0,<2.0.0)",
+    "slack-sdk (>=3.37.0,<4.0.0)",
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "pandasai (>=3.0.0,<4.0.0)",
+    "openai (>=2.7.2,<3.0.0)",
+    "duckdb (>=1.1.3,<2.0.0)",
+    "pyyaml (>=6.0.3,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
