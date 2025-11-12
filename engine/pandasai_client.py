@@ -154,6 +154,75 @@ def _rewrite_strftime_argument_order(query: str) -> str:
     return "".join(rewritten)
 
 
+def _rewrite_year_argument_cast(query: str) -> str:
+    """Ensure YEAR() operates on temporal data by casting string inputs to DATE."""
+
+    pattern = "year"
+    lower_query = query.lower()
+    cursor = 0
+    rewritten: list[str] = []
+
+    while True:
+        position = lower_query.find(pattern, cursor)
+        if position == -1:
+            rewritten.append(query[cursor:])
+            break
+
+        rewritten.append(query[cursor:position])
+        current = position + len(pattern)
+        length = len(query)
+
+        while current < length and query[current].isspace():
+            current += 1
+
+        if current >= length or query[current] != "(":
+            rewritten.append(query[position:current])
+            cursor = current
+            continue
+
+        start_argument = current + 1
+        depth = 1
+        index = start_argument
+        in_quote: str | None = None
+
+        while index < length and depth > 0:
+            char = query[index]
+            if in_quote:
+                if char == in_quote and query[index - 1] != "\\":
+                    in_quote = None
+            else:
+                if char in "\"'":
+                    in_quote = char
+                elif char == "(":
+                    depth += 1
+                elif char == ")":
+                    depth -= 1
+            index += 1
+
+        if depth != 0:
+            rewritten.append(query[position:index])
+            cursor = index
+            continue
+
+        end_argument = index - 1
+        argument = query[start_argument:end_argument].strip()
+        argument_lower = argument.lower()
+
+        already_cast = argument_lower.startswith("cast(") or "::date" in argument_lower or "::timestamp" in argument_lower
+        already_temporal = argument_lower.startswith("date(") or argument_lower.startswith("timestamp(") or argument_lower.startswith("datetime(")
+
+        if not argument or already_cast or already_temporal:
+            rewritten.append(query[position:index])
+            cursor = index
+            continue
+
+        new_call = f"year(CAST({argument} AS DATE))"
+        rewritten.append(new_call)
+        cursor = index
+
+    return "".join(rewritten)
+
+
 class PandasAISetupError(RuntimeError):
     """Raised when the PandasAI agent cannot be initialised."""
 
@@ -421,12 +490,14 @@ class PandasAIClient:
 
             def sql(self, query: str, params: Optional[list] = None):
                 fixed_query = _rewrite_strftime_argument_order(query)
+                fixed_query = _rewrite_year_argument_cast(fixed_query)
                 normalized = fixed_query
                 if SQLParser is not None:
                     normalized = SQLParser.transpile_sql_dialect(
                         fixed_query, to_dialect="duckdb"
                     )
                 normalized = _rewrite_strftime_argument_order(normalized)
+                normalized = _rewrite_year_argument_cast(normalized)
                 params_tuple = tuple(params) if params is not None else None
                 relation = connection.sql(normalized, params=params)
                 row_count: Optional[int] = None

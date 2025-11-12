@@ -20,3 +20,17 @@ plot
 Give me a distribution of active subscription plan for this year
 plot daily signups for this year in India
 I want to plot daily signups for this year in US
+Give me a distribution of active subscription plan for this year
+Give me a distribution of subscription plan that are NOT active for this year
+I want to plot daily signups for this year in US
+plot
+Give me a distribution of subscription plan that are NOT active for this year
+I want to plot daily signups for this year in US
+plot
+Give me a distribution of subscription plan that expired this year
+Give me a distribution of subscription plan that are NOT active for this year
+I want to plot daily signups for this year in US
+Give me a distribution of subscription plan that are in expired state this year
+Give me a distribution of subscription plan
+Give me a distribution of subscription plan grouped by state
+plot

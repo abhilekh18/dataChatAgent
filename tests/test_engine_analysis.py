@@ -209,7 +209,7 @@ def test_analysis_engine_removes_chart_path_insight(
     assert analysis.insight_error is None
 
 
-def test_analysis_engine_removes_relative_chart_path_in_insight(
+def test_analysis_engine_adds_missing_chart_path_from_insight(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     data_dir = tmp_path / "data"
@@ -263,6 +263,8 @@ def test_analysis_engine_removes_relative_chart_path_in_insight(
     assert analysis.insight is None
     assert analysis.chart_paths == (chart_path.as_posix(),)
     assert analysis.insight_error is None
+    # No chart text should remain because the path is treated as an attachment
+    assert analysis.insight is None
 
 
 def test_analysis_engine_uses_pandasai(monkeypatch, tmp_path: Path) -> None:

@@ -1,0 +1,10 @@
+# Environment configuration
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Generated exports
+exports/
+

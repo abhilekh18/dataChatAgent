@@ -287,31 +287,38 @@ class AnalysisEngine:
         answer: Optional[str],
         captured_charts: Sequence[str],
     ) -> Tuple[Optional[str], Tuple[str, ...]]:
-        chart_paths = tuple(captured_charts)
+        chart_paths: List[str] = list(dict.fromkeys(map(str, captured_charts)))
+        additional_paths: List[str] = []
+
         if answer is None:
-            return None, chart_paths
+            return None, tuple(chart_paths)
 
         stripped = answer.strip()
         if not stripped:
-            return None, chart_paths
+            return None, tuple(chart_paths)
 
         lines = stripped.splitlines()
         kept_lines: List[str] = []
-        removed_chart_reference = False
 
         for line in lines:
-            candidate = line.strip().strip("'\"")
-            if self._is_chart_path_reference(candidate, chart_paths):
-                removed_chart_reference = True
+            raw_candidate = line.strip().strip("'\"")
+            if self._is_chart_path_reference(raw_candidate, chart_paths):
                 continue
+            if self._is_chart_path_reference(raw_candidate, ()):
+                resolved = self._resolve_existing_path(raw_candidate)
+                if resolved:
+                    additional_paths.append(resolved)
+                    continue
             kept_lines.append(line)
 
+        normalized_chart_paths = self._merge_chart_paths(chart_paths, additional_paths)
         cleaned = "\n".join(kept_lines).strip()
+
         if cleaned:
-            return cleaned, chart_paths
-        if removed_chart_reference:
-            return None, chart_paths
-        return stripped, chart_paths
+            return cleaned, normalized_chart_paths
+        if normalized_chart_paths:
+            return None, normalized_chart_paths
+        return stripped, normalized_chart_paths
 
     def _is_chart_path_reference(
         self,
@@ -348,19 +355,44 @@ class AnalysisEngine:
                     return True
 
         if suffix in {".png", ".jpg", ".jpeg", ".svg"}:
-            path_candidate = Path(candidate)
-            if path_candidate.exists():
-                try:
-                    candidate_resolved = path_candidate.resolve()
-                except Exception:
-                    candidate_resolved = path_candidate
+            resolved = self._resolve_existing_path(candidate)
+            if resolved:
                 for chart_path in chart_paths:
                     try:
-                        if candidate_resolved == Path(chart_path).resolve():
+                        if Path(resolved).resolve() == Path(chart_path).resolve():
                             return True
                     except Exception:
                         continue
+                if not chart_paths:
+                    return True
         return False
+
+    def _resolve_existing_path(self, candidate: str) -> Optional[str]:
+        if not candidate:
+            return None
+        path_candidate = Path(candidate)
+        try:
+            if path_candidate.exists():
+                return str(path_candidate.resolve())
+        except Exception:
+            return None
+        return None
+
+    def _merge_chart_paths(
+        self,
+        existing_paths: Sequence[str],
+        additional_paths: Sequence[str],
+    ) -> Tuple[str, ...]:
+        normalized: Dict[str, str] = {}
+        for path in list(existing_paths) + list(additional_paths):
+            if not path:
+                continue
+            try:
+                key = str(Path(path).resolve())
+            except Exception:
+                key = str(Path(path))
+            normalized.setdefault(key, str(path))
+        return tuple(normalized.values())
 
     def _generate_insight(
         self,
