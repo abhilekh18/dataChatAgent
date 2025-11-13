@@ -13,11 +13,16 @@ try:  # pragma: no cover - executed during test collection only
 except ImportError:  # pragma: no cover - executed during test collection only
     slack_bolt = None  # type: ignore[assignment]
 
-from engine.analysis import QuestionAnalysis
-from intake.catalog import DatasetMetadata
-from intake.router import RouterResult
-from intake.slack_app import SlackAppConfig, build_slack_app, start_socket_mode_app, _build_analysis  # noqa: E402
-from main import _shutdown_handler  # noqa: E402
+from datachatagent.engine.analysis import QuestionAnalysis
+from datachatagent.intake.catalog import DatasetMetadata
+from datachatagent.intake.router import RouterResult
+from datachatagent.intake.slack_app import (  # noqa: E402
+    SlackAppConfig,
+    _build_analysis,
+    build_slack_app,
+    start_socket_mode_app,
+)
+from datachatagent.main import _shutdown_handler  # noqa: E402
 
 
 slack_required = pytest.mark.skipif(
@@ -171,7 +176,7 @@ def test_handle_message_persists_question(
         def refresh(self) -> None:
             pass
 
-    monkeypatch.setattr("intake.slack_app.QUESTIONS_FILE", questions_file)
+    monkeypatch.setattr("datachatagent.intake.slack_app.QUESTIONS_FILE", questions_file)
 
     app = build_slack_app(
         slack_config,
@@ -215,7 +220,7 @@ def test_startup_message_sent_when_default_channel(monkeypatch: pytest.MonkeyPat
 
             return decorator
 
-    monkeypatch.setattr("intake.slack_app.App", DummyApp)
+    monkeypatch.setattr("datachatagent.intake.slack_app.App", DummyApp)
 
     config = SlackAppConfig(
         bot_token="xoxb-test",

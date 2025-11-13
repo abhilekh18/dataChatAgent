@@ -73,7 +73,7 @@ class SemanticModel:
         return iter(self.datasets.values())
 
 
-DEFAULT_SEMANTIC_PATH = Path("semantic") / "semantic.yaml"
+DEFAULT_SEMANTIC_PATH = Path(__file__).parent / "semantic.yaml"
 
 
 def load_semantic_model(path: Path | str = DEFAULT_SEMANTIC_PATH) -> SemanticModel:

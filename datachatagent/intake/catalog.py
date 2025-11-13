@@ -9,13 +9,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, Iterator, Mapping, Optional, Tuple
 
-from semantic import (
+from datachatagent.semantic import (
     DatasetSemantic,
     SemanticConfigError,
     SemanticModel,
     load_semantic_model,
 )
-from semantic.loader import DEFAULT_SEMANTIC_PATH
+from datachatagent.semantic.loader import DEFAULT_SEMANTIC_PATH
 
 
 logger = logging.getLogger(__name__)

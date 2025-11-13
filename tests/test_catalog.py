@@ -6,7 +6,7 @@ import csv
 from pathlib import Path
 from textwrap import dedent
 
-from intake.catalog import DatasetCatalog
+from datachatagent.intake.catalog import DatasetCatalog
 
 
 def _write_text(path: Path, content: str) -> None:

@@ -6,8 +6,8 @@ import csv
 from pathlib import Path
 from textwrap import dedent
 
-from intake.catalog import DatasetCatalog
-from intake.router import QuestionRouter
+from datachatagent.intake.catalog import DatasetCatalog
+from datachatagent.intake.router import QuestionRouter
 
 
 def _write_csv(path: Path, header: list[str], rows: list[list[str]]) -> None:

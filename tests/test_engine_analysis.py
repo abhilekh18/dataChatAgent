@@ -10,9 +10,9 @@ from textwrap import dedent
 import pandas as pd
 import pytest
 
-from engine.analysis import AnalysisEngine, QuestionAnalysis
-from engine.pandasai_client import PandasAISetupError
-from intake.catalog import DatasetCatalog, DatasetMetadata
+from datachatagent.engine.analysis import AnalysisEngine, QuestionAnalysis
+from datachatagent.engine.pandasai_client import PandasAISetupError
+from datachatagent.intake.catalog import DatasetCatalog, DatasetMetadata
 
 
 def _write_csv(path: Path, header: list[str], rows: list[list[str]]) -> None:
@@ -139,7 +139,7 @@ def test_analysis_engine_reports_pandasai_setup_error(monkeypatch) -> None:
         def from_environment(cls, *, default_model: str):  # type: ignore[no-untyped-def]
             raise PandasAISetupError("Missing API key.")
 
-    monkeypatch.setattr("engine.analysis.PandasAIClient", FailingClient)
+    monkeypatch.setattr("datachatagent.engine.analysis.PandasAIClient", FailingClient)
 
     insight, error, queries, charts = engine._generate_insight("question", [(dataset, df)])
     assert insight is None
@@ -198,7 +198,7 @@ def test_analysis_engine_removes_chart_path_insight(
         captured.append(chart_path.as_posix())
         yield
 
-    monkeypatch.setattr("engine.analysis.PandasAIClient", StubClient)
+    monkeypatch.setattr("datachatagent.engine.analysis.PandasAIClient", StubClient)
     monkeypatch.setattr(AnalysisEngine, "_load_dataframe", fake_load_dataframe)
     monkeypatch.setattr(AnalysisEngine, "_capture_charts", fake_capture_charts)
 
@@ -254,7 +254,7 @@ def test_analysis_engine_adds_missing_chart_path_from_insight(
         captured.append(chart_path.as_posix())
         yield
 
-    monkeypatch.setattr("engine.analysis.PandasAIClient", StubClient)
+    monkeypatch.setattr("datachatagent.engine.analysis.PandasAIClient", StubClient)
     monkeypatch.setattr(AnalysisEngine, "_load_dataframe", fake_load_dataframe)
     monkeypatch.setattr(AnalysisEngine, "_capture_charts", fake_capture_charts)
 

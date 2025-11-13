@@ -8,7 +8,11 @@ import argparse
 from pathlib import Path
 from typing import Optional, Sequence
 
-from intake.slack_app import SlackAppConfig, SlackDependencyError, start_socket_mode_app
+from datachatagent.intake.slack_app import (
+    SlackAppConfig,
+    SlackDependencyError,
+    start_socket_mode_app,
+)
 
 LOGGER = logging.getLogger(__name__)
 

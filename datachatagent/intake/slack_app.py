@@ -20,8 +20,8 @@ except ImportError:  # pragma: no cover - exercised when dependency missing
     App = None  # type: ignore[assignment]
     SocketModeHandler = None  # type: ignore[assignment]
 
-from engine.analysis import AnalysisEngine, QuestionAnalysis
-from output.formatter import format_analysis_response
+from datachatagent.engine.analysis import AnalysisEngine, QuestionAnalysis
+from datachatagent.output.formatter import format_analysis_response
 
 from .catalog import DatasetCatalog
 from .router import QuestionRouter, RouterResult
@@ -29,7 +29,7 @@ from .router import QuestionRouter, RouterResult
 
 logger = logging.getLogger(__name__)
 
-QUESTIONS_FILE = Path(__file__).resolve().parent.parent / "questions.txt"
+QUESTIONS_FILE = Path(__file__).resolve().parent.parent.parent / "questions.txt"
 
 
 @dataclass(frozen=True)

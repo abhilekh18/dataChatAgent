@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from engine.analysis import DatasetSummary, NumericSummary, QuestionAnalysis
-from engine.pandasai_client import SQLQueryLogEntry
-from output.formatter import format_analysis_response, format_dataset_section
+from datachatagent.engine.analysis import DatasetSummary, NumericSummary, QuestionAnalysis
+from datachatagent.engine.pandasai_client import SQLQueryLogEntry
+from datachatagent.output.formatter import format_analysis_response, format_dataset_section
 
 
 def _sample_summary() -> DatasetSummary:

@@ -6,8 +6,8 @@ import os
 
 import pytest
 
-import main as main_module
-from main import _load_env_file, build_config_from_env
+import datachatagent.main as main_module
+from datachatagent.main import _load_env_file, build_config_from_env
 
 
 def test_build_config_from_env_reads_values(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -76,7 +76,7 @@ def test_main_handles_keyboard_interrupt(monkeypatch: pytest.MonkeyPatch, caplog
         captured["config"] = config
         return dummy_handler
 
-    monkeypatch.setattr("main.start_socket_mode_app", fake_start_socket_mode_app)
+    monkeypatch.setattr("datachatagent.main.start_socket_mode_app", fake_start_socket_mode_app)
 
     caplog.set_level("INFO")
     main_module.main([])
@@ -109,7 +109,7 @@ def test_main_respects_no_show_candidates_flag(monkeypatch: pytest.MonkeyPatch) 
         captured["config"] = config
         return dummy_handler
 
-    monkeypatch.setattr("main.start_socket_mode_app", fake_start_socket_mode_app)
+    monkeypatch.setattr("datachatagent.main.start_socket_mode_app", fake_start_socket_mode_app)
 
     main_module.main(["--no-show-candidates"])
 
@@ -140,7 +140,7 @@ def test_main_respects_show_candidates_flag(monkeypatch: pytest.MonkeyPatch) -> 
         captured["config"] = config
         return dummy_handler
 
-    monkeypatch.setattr("main.start_socket_mode_app", fake_start_socket_mode_app)
+    monkeypatch.setattr("datachatagent.main.start_socket_mode_app", fake_start_socket_mode_app)
 
     main_module.main(["--show-candidates"])
 

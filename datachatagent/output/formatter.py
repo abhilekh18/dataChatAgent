@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from engine.analysis import DatasetSummary, NumericSummary, QuestionAnalysis
+from datachatagent.engine.analysis import DatasetSummary, NumericSummary, QuestionAnalysis
 
 
 def _format_numeric_summary(summary: NumericSummary) -> str:

@@ -7,14 +7,14 @@ from dataclasses import dataclass
 import pandas as pd
 import pytest
 
-from engine.pandasai_client import (
+from datachatagent.engine.pandasai_client import (
     PandasAIClient,
     PandasAIExecutionError,
     PandasAISettings,
     PandasAISetupError,
     SQLQueryLogEntry,
 )
-import engine.pandasai_client as pandasai_client_module
+import datachatagent.engine.pandasai_client as pandasai_client_module
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ def test_pandasai_client_uses_agent(monkeypatch) -> None:
             captured["question"] = question
             return "agent answer"
 
-    monkeypatch.setattr("engine.pandasai_client.Agent", DummyAgent)
+    monkeypatch.setattr("datachatagent.engine.pandasai_client.Agent", DummyAgent)
     client = PandasAIClient(_make_settings())
 
     df = pd.DataFrame({"value": [1, 2]})
@@ -85,7 +85,7 @@ def test_pandasai_client_records_sql_queries(monkeypatch) -> None:
             count = relation.df().iloc[0, 0]
             return f"{question}: {int(count)}"
 
-    monkeypatch.setattr("engine.pandasai_client.Agent", QueryAgent)
+    monkeypatch.setattr("datachatagent.engine.pandasai_client.Agent", QueryAgent)
     client = PandasAIClient(_make_settings())
 
     df = pd.DataFrame({"value": [1, 2, 3]})
@@ -121,7 +121,7 @@ def test_pandasai_client_rewrites_strftime(monkeypatch) -> None:
             frame = relation.df()
             return ", ".join(frame["year_value"].astype(str))
 
-    monkeypatch.setattr("engine.pandasai_client.Agent", StrftimeAgent)
+    monkeypatch.setattr("datachatagent.engine.pandasai_client.Agent", StrftimeAgent)
     client = PandasAIClient(_make_settings())
 
     df = pd.DataFrame({"start_date": ["2024-01-01", "2025-02-15"]})
@@ -156,7 +156,7 @@ def test_pandasai_client_rewrites_year(monkeypatch) -> None:
             frame = relation.df()
             return ", ".join(frame["year_value"].astype(str))
 
-    monkeypatch.setattr("engine.pandasai_client.Agent", YearAgent)
+    monkeypatch.setattr("datachatagent.engine.pandasai_client.Agent", YearAgent)
     client = PandasAIClient(_make_settings())
 
     df = pd.DataFrame({"start_date": ["2024-01-01", "2025-02-15"]})
@@ -190,7 +190,7 @@ def test_pandasai_client_rewrites_year_with_timestamp_cast(monkeypatch) -> None:
             frame = relation.df()
             return ", ".join(frame["year_value"].astype(str))
 
-    monkeypatch.setattr("engine.pandasai_client.Agent", YearTimestampAgent)
+    monkeypatch.setattr("datachatagent.engine.pandasai_client.Agent", YearTimestampAgent)
     client = PandasAIClient(_make_settings())
 
     df = pd.DataFrame({"start_date": ["2024-01-01 00:00:00", "2025-02-15 12:30:45"]})
@@ -218,7 +218,7 @@ def test_pandasai_client_wraps_agent_errors(monkeypatch) -> None:
         def chat(self, question: str) -> str:
             raise ValueError("boom")
 
-    monkeypatch.setattr("engine.pandasai_client.Agent", FailingAgent)
+    monkeypatch.setattr("datachatagent.engine.pandasai_client.Agent", FailingAgent)
     client = PandasAIClient(_make_settings())
 
     df = pd.DataFrame({"value": [1]})

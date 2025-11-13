@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import uuid4
 
-from intake import DatasetMetadata, tokenize
+from datachatagent.intake import DatasetMetadata, tokenize
 
 
 def _infer_currency_unit(*texts: Optional[str]) -> Optional[str]:
