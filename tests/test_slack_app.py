@@ -2,16 +2,27 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+from typing import List, Tuple
 
 import pytest
 
-slack_bolt = pytest.importorskip("slack_bolt", reason="slack_bolt dependency not available")
+try:  # pragma: no cover - executed during test collection only
+    import slack_bolt  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - executed during test collection only
+    slack_bolt = None  # type: ignore[assignment]
 
 from engine.analysis import QuestionAnalysis
 from intake.catalog import DatasetMetadata
 from intake.router import RouterResult
 from intake.slack_app import SlackAppConfig, build_slack_app, start_socket_mode_app, _build_analysis  # noqa: E402
+from main import _shutdown_handler  # noqa: E402
+
+
+slack_required = pytest.mark.skipif(
+    slack_bolt is None, reason="slack_bolt dependency not available"
+)
 
 
 @pytest.fixture()
@@ -24,12 +35,14 @@ def slack_config() -> SlackAppConfig:
     )
 
 
+@slack_required
 def test_build_slack_app_returns_app(slack_config: SlackAppConfig) -> None:
     app = build_slack_app(slack_config)
     assert app is not None
     assert app.client.token == slack_config.bot_token
 
 
+@slack_required
 def test_start_socket_mode_app_returns_handler(slack_config: SlackAppConfig) -> None:
     handler = start_socket_mode_app(slack_config)
     assert handler is not None
@@ -77,7 +90,10 @@ def test_build_analysis_without_matches() -> None:
     assert analysis.notes == "analysis"
 
 
-def test_handle_message_uploads_charts(monkeypatch: pytest.MonkeyPatch, slack_config: SlackAppConfig) -> None:
+@slack_required
+def test_handle_message_uploads_charts(
+    monkeypatch: pytest.MonkeyPatch, slack_config: SlackAppConfig
+) -> None:
     metadata = DatasetMetadata(
         name="users",
         path=Path("users.csv"),
@@ -137,6 +153,7 @@ def test_handle_message_uploads_charts(monkeypatch: pytest.MonkeyPatch, slack_co
     assert uploads[0]["file"] == b"fake-bytes"
 
 
+@slack_required
 def test_handle_message_persists_question(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, slack_config: SlackAppConfig
 ) -> None:
@@ -176,4 +193,61 @@ def test_handle_message_persists_question(
     content = questions_file.read_text(encoding="utf-8")
     assert content == "How many users are active?\n"
 
+
+def test_startup_message_sent_when_default_channel(monkeypatch: pytest.MonkeyPatch) -> None:
+    posted = {}
+
+    class DummyApp:
+        def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+            self.client = type(
+                "ClientStub",
+                (),
+                {
+                    "chat_postMessage": lambda self, **call_kwargs: posted.update(call_kwargs)
+                },
+            )()
+            self.logger = logging.getLogger("dummy")
+            self.client.proxy = None
+
+        def event(self, _name):  # type: ignore[no-untyped-def]
+            def decorator(func):
+                return func
+
+            return decorator
+
+    monkeypatch.setattr("intake.slack_app.App", DummyApp)
+
+    config = SlackAppConfig(
+        bot_token="xoxb-test",
+        app_token="xapp-test",
+        signing_secret="secret",
+        default_channel="C123",
+        token_verification_enabled=False,
+    )
+
+    start_socket_mode_app(config)
+
+    assert posted["channel"] == "C123"
+    assert "ready" in posted["text"].lower()
+
+def test_shutdown_handler_invokes_stop_join_close() -> None:
+    calls: List[Tuple[str, Tuple]] = []
+
+    class StubHandler:
+        def stop(self) -> None:
+            calls.append(("stop", ()))
+
+        def join(self, timeout: int | None = None) -> None:
+            calls.append(("join", (timeout,)))
+
+        def close(self) -> None:
+            calls.append(("close", ()))
+
+    handler = StubHandler()
+
+    _shutdown_handler(handler)
+
+    assert ("stop", ()) in calls
+    assert ("join", (5,)) in calls or ("join", (None,)) in calls
+    assert ("close", ()) in calls
 

@@ -169,6 +169,42 @@ def test_pandasai_client_rewrites_year(monkeypatch) -> None:
     normalized_queries = [entry.query.lower().replace(" ", "") for entry in client.last_sql_queries]
     assert any("year(cast(start_dateasdate))" in q for q in normalized_queries)
 
+
+def test_pandasai_client_rewrites_year_with_timestamp_cast(monkeypatch) -> None:
+    class YearTimestampAgent:
+        def __init__(self, dfs, config, memory_size, description) -> None:  # type: ignore[no-untyped-def]
+            self._dfs = dfs
+
+        def chat(self, question: str) -> str:
+            manager = pandasai_client_module.duckdb_manager_module.DuckDBConnectionManager()
+            dataset = self._dfs[0]
+            manager.register(dataset.schema.name, dataset)
+            relation = manager.sql(
+                f"""
+                SELECT year(CAST(start_date AS TIMESTAMP)) AS year_value
+                FROM {dataset.schema.name}
+                ORDER BY start_date
+                """,
+                params=None,
+            )
+            frame = relation.df()
+            return ", ".join(frame["year_value"].astype(str))
+
+    monkeypatch.setattr("engine.pandasai_client.Agent", YearTimestampAgent)
+    client = PandasAIClient(_make_settings())
+
+    df = pd.DataFrame({"start_date": ["2024-01-01 00:00:00", "2025-02-15 12:30:45"]})
+    metadata = _MetadataStub(name="subscriptions", display_name="Subscriptions")
+
+    result = client.run("Which years?", [(metadata, df)])
+
+    assert result == "2024, 2025"
+    rewritten_queries = [entry.query.lower().replace(" ", "") for entry in client.last_sql_queries]
+    assert any(
+        "year(cast(cast(start_dateastimestamp)asdate))" in q for q in rewritten_queries
+    )
+
+
 def test_pandasai_client_requires_key_for_openai() -> None:
     with pytest.raises(PandasAISetupError):
         PandasAIClient(_make_settings(provider="openai"))

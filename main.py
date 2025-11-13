@@ -71,6 +71,54 @@ def build_config_from_env(*, show_candidate_datasets: bool = False) -> SlackAppC
     )
 
 
+def _shutdown_handler(handler) -> None:  # type: ignore[no-untyped-def]
+    """Attempt to stop, join, and close the SocketModeHandler safely."""
+    if handler is None:
+        return
+
+    for method_name in ("stop",):
+        method = getattr(handler, method_name, None)
+        if callable(method):
+            try:
+                method()
+            except Exception:  # pragma: no cover - defensive cleanup
+                LOGGER.debug(
+                    "SocketModeHandler %s() raised an exception during shutdown",
+                    method_name,
+                    exc_info=True,
+                )
+
+    join_method = getattr(handler, "join", None)
+    if callable(join_method):
+        try:
+            join_method(timeout=5)
+        except TypeError:
+            try:
+                join_method()  # type: ignore[misc]
+            except Exception:  # pragma: no cover - defensive cleanup
+                LOGGER.debug(
+                    "SocketModeHandler join() raised an exception during shutdown",
+                    exc_info=True,
+                )
+        except Exception:  # pragma: no cover - defensive cleanup
+            LOGGER.debug(
+                "SocketModeHandler join(timeout=5) raised an exception during shutdown",
+                exc_info=True,
+            )
+
+    for method_name in ("close",):
+        method = getattr(handler, method_name, None)
+        if callable(method):
+            try:
+                method()
+            except Exception:  # pragma: no cover - defensive cleanup
+                LOGGER.debug(
+                    "SocketModeHandler %s() raised an exception during shutdown",
+                    method_name,
+                    exc_info=True,
+                )
+
+
 def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the data chat agent Slack bot.")
     parser.add_argument(
@@ -110,12 +158,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     except KeyboardInterrupt:
         LOGGER.info("Shutdown requested by user.")
     finally:
-        close = getattr(handler, "close", None)
-        if callable(close):
-            try:
-                close()
-            except Exception:  # pragma: no cover - defensive cleanup
-                LOGGER.debug("SocketModeHandler close() raised an exception", exc_info=True)
+        _shutdown_handler(handler)
 
 
 if __name__ == "__main__":

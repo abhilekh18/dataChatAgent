@@ -34,3 +34,21 @@ Give me a distribution of subscription plan that are in expired state this year
 Give me a distribution of subscription plan
 Give me a distribution of subscription plan grouped by state
 plot
+Give me a distribution of subscription plan grouped by status
+hello
+plot
+hello
+Give me a distribution of subscription plan grouped by status
+Give me a distribution of subscription plan grouped by status
+I want to plot daily signups for this year in US
+plot
+I want to plot daily signups for this year in US
+I want to plot daily signups for 2025 in US
+I want to plot daily signups for 2025 in US
+plot
+plot
+I want to plot daily signups for 2025 in US
+I want to plot daily signups for 2025 in US in a graphical visual way
+plot
+plot
+plot

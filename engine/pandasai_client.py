@@ -207,12 +207,30 @@ def _rewrite_year_argument_cast(query: str) -> str:
         end_argument = index - 1
         argument = query[start_argument:end_argument].strip()
         argument_lower = argument.lower()
+        normalized_argument = " ".join(argument_lower.split())
 
-        already_cast = argument_lower.startswith("cast(") or "::date" in argument_lower or "::timestamp" in argument_lower
-        already_temporal = argument_lower.startswith("date(") or argument_lower.startswith("timestamp(") or argument_lower.startswith("datetime(")
-
-        if not argument or already_cast or already_temporal:
+        if not argument:
             rewritten.append(query[position:index])
+            cursor = index
+            continue
+
+        casts_to_date = normalized_argument.startswith("cast(") and " as date" in normalized_argument
+        casts_to_timestamp = normalized_argument.startswith("cast(") and " as timestamp" in normalized_argument
+        has_double_colon = "::date" in normalized_argument or "::timestamp" in normalized_argument
+        already_temporal = (
+            argument_lower.startswith("date(")
+            or argument_lower.startswith("timestamp(")
+            or argument_lower.startswith("datetime(")
+        )
+
+        if casts_to_date or has_double_colon or already_temporal:
+            rewritten.append(query[position:index])
+            cursor = index
+            continue
+
+        if casts_to_timestamp or argument_lower.startswith("cast("):
+            new_call = f"year(CAST({argument} AS DATE))"
+            rewritten.append(new_call)
             cursor = index
             continue
 

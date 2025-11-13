@@ -175,6 +175,19 @@ def start_socket_mode_app(config: SlackAppConfig) -> SocketModeHandler:
     _ensure_dependencies()
     app = build_slack_app(config)
     handler = SocketModeHandler(app, config.app_token)
+
+    channel = config.default_channel
+    if channel:
+        try:
+            app.client.chat_postMessage(  # type: ignore[no-untyped-call]
+                channel=channel,
+                text="I'm online and ready to answer your data questions. Ask me anything!",
+            )
+        except Exception:
+            logger.warning(
+                "Failed to send startup message to channel %s", channel, exc_info=True
+            )
+
     return handler
 
 
