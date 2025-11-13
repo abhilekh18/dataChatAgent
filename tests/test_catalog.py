@@ -118,3 +118,39 @@ def test_catalog_semantic_lookup_with_suffix(tmp_path: Path) -> None:
     assert metadata.semantic.description == "Subscription records with current status."
     assert "memberships" in metadata.keywords
 
+
+def test_catalog_loads_semantic_directory(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "users.csv").write_text("user_id\n1\n", encoding="utf-8")
+    (data_dir / "payments.csv").write_text("payment_id,amount\np1,10\n", encoding="utf-8")
+
+    semantic_dir = tmp_path / "semantic"
+    _write_text(
+        semantic_dir / "users.yaml",
+        dedent(
+            """
+            datasets:
+              users:
+                display_name: Users
+            """
+        ).strip(),
+    )
+    _write_text(
+        semantic_dir / "payments.yaml",
+        dedent(
+            """
+            datasets:
+              payments:
+                display_name: Payments
+            """
+        ).strip(),
+    )
+
+    catalog = DatasetCatalog(root=data_dir, auto_load=True, semantic_path=semantic_dir)
+
+    users_metadata = catalog.get("users")
+    payments_metadata = catalog.get("payments")
+
+    assert users_metadata is not None and users_metadata.display_name == "Users"
+    assert payments_metadata is not None and payments_metadata.display_name == "Payments"

@@ -1,0 +1,45 @@
+datasets:
+  subscriptions:
+    display_name: Subscriptions
+    description: Records of user subscription activity.
+    synonyms:
+      - plans
+      - memberships
+    columns:
+      subscription_id:
+        description: Unique identifier for a subscription record.
+        synonyms:
+          - sub_id
+      user_id:
+        description: Links the subscription to a user.
+        synonyms:
+          - account_id
+      plan:
+        description: Subscription plan or tier.
+        synonyms:
+          - tier
+          - subscription_plan
+      start_date:
+        description: Start timestamp for the subscription.
+        synonyms:
+          - began_at
+          - activation_date
+      end_date:
+        description: End timestamp if the subscription has concluded.
+        synonyms:
+          - ended_at
+          - expiration_date
+      status:
+        description: Current status of the subscription.
+        accepted_values: ['active', 'inactive', 'cancelled', 'expired', 'suspended', 'pending', 'refunded']
+        synonyms:
+          - subscription_status
+          - plan_state
+    metrics:
+      active_subscriptions:
+        description: Count of subscriptions currently marked active.
+        expression: count(subscription_id where status == 'active')
+        synonyms:
+          - active_customers
+          - active_plans
+

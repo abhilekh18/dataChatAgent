@@ -1,10 +1,10 @@
-"""Utilities for loading the YAML semantic layer."""
+"""Utilities for loading semantic metadata from YAML files."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Mapping, Optional, Tuple
+from typing import Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
@@ -73,16 +73,18 @@ class SemanticModel:
         return iter(self.datasets.values())
 
 
-DEFAULT_SEMANTIC_PATH = Path(__file__).parent / "semantic.yaml"
+DEFAULT_SEMANTIC_PATH = Path(__file__).parent
 
 
 def load_semantic_model(path: Path | str = DEFAULT_SEMANTIC_PATH) -> SemanticModel:
-    """Load the semantic YAML file into a structured model.
+    """Load semantic YAML files into a structured model.
 
     Parameters
     ----------
     path:
-        Location of the YAML file. Defaults to ``semantic/semantic.yaml``.
+        Location of the semantic configuration. Can point to a directory of
+        YAML files or a single YAML file. Defaults to the ``semantic`` package
+        directory.
 
     Returns
     -------
@@ -92,51 +94,93 @@ def load_semantic_model(path: Path | str = DEFAULT_SEMANTIC_PATH) -> SemanticMod
     Raises
     ------
     SemanticConfigError
-        If the YAML file contains invalid structure or types.
+        If the YAML files contain invalid structure or types.
     """
 
     semantic_path = Path(path)
     if not semantic_path.exists():
         return SemanticModel(datasets={})
 
+    yaml_files = _collect_yaml_files(semantic_path)
+    if not yaml_files:
+        return SemanticModel(datasets={})
+
+    datasets: Dict[str, DatasetSemantic] = {}
+    for yaml_file in yaml_files:
+        dataset_name, dataset_semantic = _load_single_dataset(yaml_file)
+        if dataset_name in datasets:
+            raise SemanticConfigError(
+                f"Duplicate dataset definition '{dataset_name}' found in {yaml_file}."
+            )
+        datasets[dataset_name] = dataset_semantic
+
+    return SemanticModel(datasets=datasets)
+
+
+def _collect_yaml_files(path: Path) -> Sequence[Path]:
+    if path.is_dir():
+        files = sorted(
+            candidate
+            for candidate in path.iterdir()
+            if candidate.is_file() and candidate.suffix.lower() in {".yaml", ".yml"}
+        )
+        return files
+    if path.is_file():
+        return (path,)
+    return ()
+
+
+def _load_single_dataset(yaml_file: Path) -> Tuple[str, DatasetSemantic]:
     try:
-        raw = yaml.safe_load(semantic_path.read_text(encoding="utf-8"))
+        raw = yaml.safe_load(yaml_file.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:  # pragma: no cover - YAML parsing errors
-        raise SemanticConfigError(f"Failed to parse semantic YAML: {exc}") from exc
+        raise SemanticConfigError(f"Failed to parse semantic YAML {yaml_file}: {exc}") from exc
     except OSError as exc:
-        raise SemanticConfigError(f"Failed to read semantic YAML: {exc}") from exc
+        raise SemanticConfigError(f"Failed to read semantic YAML {yaml_file}: {exc}") from exc
 
     datasets_section = raw.get("datasets") if isinstance(raw, dict) else None
     if datasets_section is None:
-        raise SemanticConfigError("Semantic YAML must contain a top-level 'datasets' mapping.")
+        raise SemanticConfigError(
+            f"Semantic YAML {yaml_file} must contain a top-level 'datasets' mapping."
+        )
     if not isinstance(datasets_section, dict):
-        raise SemanticConfigError("'datasets' must be a mapping of dataset names to definitions.")
-
-    datasets: Dict[str, DatasetSemantic] = {}
-    for dataset_name, dataset_payload in datasets_section.items():
-        if not isinstance(dataset_payload, dict):
-            raise SemanticConfigError(f"Dataset '{dataset_name}' must be a mapping.")
-
-        display_name = str(dataset_payload.get("display_name") or dataset_name.replace("_", " ").title())
-        description = _optional_str(dataset_payload.get("description"))
-        synonyms = _normalize_synonyms(dataset_payload.get("synonyms"))
-
-        columns_payload = dataset_payload.get("columns", {})
-        columns = _parse_columns(dataset_name, columns_payload)
-
-        metrics_payload = dataset_payload.get("metrics", {})
-        metrics = _parse_metrics(dataset_name, metrics_payload)
-
-        datasets[dataset_name] = DatasetSemantic(
-            name=dataset_name,
-            display_name=display_name,
-            description=description,
-            synonyms=synonyms,
-            columns=columns,
-            metrics=metrics,
+        raise SemanticConfigError(
+            f"'datasets' in {yaml_file} must be a mapping of dataset names to definitions."
         )
 
-    return SemanticModel(datasets=datasets)
+    entries = list(datasets_section.items())
+    if not entries:
+        raise SemanticConfigError(f"{yaml_file} does not define any datasets.")
+    if len(entries) != 1:
+        raise SemanticConfigError(f"{yaml_file} must define exactly one dataset.")
+
+    dataset_name, dataset_payload = entries[0]
+    if not isinstance(dataset_payload, dict):
+        raise SemanticConfigError(f"Dataset '{dataset_name}' in {yaml_file} must be a mapping.")
+
+    dataset = _build_dataset_semantic(dataset_name, dataset_payload)
+    return dataset_name, dataset
+
+
+def _build_dataset_semantic(dataset_name: str, dataset_payload: Mapping[str, object]) -> DatasetSemantic:
+    display_name = str(dataset_payload.get("display_name") or dataset_name.replace("_", " ").title())
+    description = _optional_str(dataset_payload.get("description"))
+    synonyms = _normalize_synonyms(dataset_payload.get("synonyms"))
+
+    columns_payload = dataset_payload.get("columns", {})
+    columns = _parse_columns(dataset_name, columns_payload)
+
+    metrics_payload = dataset_payload.get("metrics", {})
+    metrics = _parse_metrics(dataset_name, metrics_payload)
+
+    return DatasetSemantic(
+        name=dataset_name,
+        display_name=display_name,
+        description=description,
+        synonyms=synonyms,
+        columns=columns,
+        metrics=metrics,
+    )
 
 
 def _parse_columns(dataset_name: str, payload: object) -> Mapping[str, ColumnSemantic]:

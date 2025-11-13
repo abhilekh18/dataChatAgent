@@ -59,3 +59,7 @@ Give me the distribution of subscriptions in 2025
 plot
 Give me the distribution of subscriptions in 2025
 I want to plot daily signups for 2025 in US in a graphical visual way
+plot
+How many total users signed up between March 2025 and June 2025 in India?
+I want to plot daily signups for this year in US
+Give me a distribution of subscription plan that are NOT active for this year

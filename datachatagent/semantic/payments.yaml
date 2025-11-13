@@ -1,0 +1,39 @@
+datasets:
+  payments:
+    display_name: Payments
+    description: Payment transactions recorded for subscriptions.
+    synonyms:
+      - transactions
+      - receipts
+    columns:
+      payment_id:
+        description: Primary identifier for a payment transaction.
+        synonyms:
+          - txn_id
+      subscription_id:
+        description: Subscription linked to the payment.
+        synonyms:
+          - sub_id
+      payment_date:
+        description: Timestamp when the payment was processed.
+        synonyms:
+          - paid_at
+          - transaction_time
+      amount_usd:
+        description: Amount charged in USD.
+        synonyms:
+          - payment_amount
+          - charge_usd
+      method:
+        description: Payment method used for the transaction.
+        synonyms:
+          - payment_type
+          - channel
+    metrics:
+      total_payments_usd:
+        description: Total value of recorded payments in USD.
+        expression: sum(amount_usd)
+        synonyms:
+          - payments_sum
+          - payment_volume
+

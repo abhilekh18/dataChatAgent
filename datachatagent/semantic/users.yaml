@@ -1,0 +1,36 @@
+datasets:
+  users:
+    display_name: Users
+    description: Registered users and their signup profile.
+    synonyms:
+      - customer
+      - account
+    columns:
+      user_id:
+        description: Unique identifier for each user.
+        synonyms:
+          - id
+          - customer_id
+      signup_date:
+        description: Timestamp when the user registered.
+        synonyms:
+          - joined_at
+          - registration_time
+      country:
+        description: Reported country for the user.
+        synonyms:
+          - region
+          - locale
+      device_type:
+        description: Primary device used during signup.
+        synonyms:
+          - platform
+          - device
+    metrics:
+      total_users:
+        description: Total number of registered users.
+        expression: count(user_id)
+        synonyms:
+          - user_count
+          - customers
+
