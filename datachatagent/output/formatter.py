@@ -8,6 +8,7 @@ from datachatagent.engine.analysis import DatasetSummary, NumericSummary, Questi
 
 
 def _format_numeric_summary(summary: NumericSummary) -> str:
+    """Return a compact textual description of a numeric column."""
     parts = []
     if summary.minimum is not None and summary.maximum is not None:
         parts.append(f"{summary.minimum:.2f}–{summary.maximum:.2f}")
@@ -17,6 +18,7 @@ def _format_numeric_summary(summary: NumericSummary) -> str:
 
 
 def _format_preview_rows(summary: DatasetSummary) -> str:
+    """Render preview rows as bullet points for Slack."""
     if not summary.preview:
         return "No preview available."
     rows: List[str] = []
@@ -27,6 +29,7 @@ def _format_preview_rows(summary: DatasetSummary) -> str:
 
 
 def format_dataset_section(summary: DatasetSummary) -> str:
+    """Convert a dataset summary into a Slack-friendly section."""
     lines = [
         f"*{summary.display_name}* — {summary.row_count} rows, {len(summary.columns)} columns",
     ]
@@ -53,6 +56,7 @@ def format_dataset_section(summary: DatasetSummary) -> str:
 
 
 def format_analysis_response(analysis: QuestionAnalysis, *, include_candidates: bool = True) -> str:
+    """Create the full Slack message for an analysis result."""
     lines = [f"*Question:* {analysis.question}"]
 
     if analysis.insight:

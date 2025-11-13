@@ -336,3 +336,24 @@ def test_capture_charts_saves_plot(tmp_path: Path) -> None:
     assert saved_path.exists()
 
 
+def test_capture_charts_records_direct_savefig(tmp_path: Path) -> None:
+    pytest.importorskip("matplotlib")
+    pytest.importorskip("matplotlib.pyplot")
+
+    chart_dir = tmp_path / "charts"
+    engine = AnalysisEngine(enable_pandasai=True, chart_dir=chart_dir)
+
+    captured: list[str] = []
+    with engine._capture_charts(captured):
+        import matplotlib.pyplot as plt
+
+        destination = chart_dir / "direct.png"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        plt.plot([0, 1], [0, 1])
+        plt.savefig(destination)
+        plt.close("all")
+
+    assert str(destination) in captured
+    assert destination.exists()
+
+
